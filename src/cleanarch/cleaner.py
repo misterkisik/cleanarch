@@ -244,7 +244,8 @@ def build_clean_script(selected_ids: List[str], has_sudo_pass: bool = False) -> 
         if "pacman_cache" in selected_ids:
             commands.append('echo "-> Полная очистка кэша pacman (удаление всех архивов пакетов)..."')
             commands.append('sudo rm -rf /var/cache/pacman/pkg/download-* 2>/dev/null || true')
-            commands.append('printf "y\\ny\\n" | sudo pacman -Scc --noconfirm 2>/dev/null || true')
+            commands.append('printf "y\\ny\\n" | sudo pacman -Scc 2>/dev/null || true')
+            commands.append('sudo rm -f /var/cache/pacman/pkg/*.pkg.tar.* 2>/dev/null || true')
             commands.append('echo "✓ Кэш pacman полностью очищен"')
 
         if "journal" in selected_ids:
