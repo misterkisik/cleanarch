@@ -1,3 +1,6 @@
+[![Telegram](https://img.shields.io/badge/Telegram_Канал-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/m1sterk1s1kgithub)
+
+
 # CleanArch 🧹✨
 
 **CleanArch** — графическая утилита для очистки дискового пространства, кэшей и обновления системы в **Arch Linux** (Manjaro, EndeavourOS и др.) на базе **GTK 4 / Libadwaita**.
