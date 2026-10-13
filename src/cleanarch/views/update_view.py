@@ -6,9 +6,11 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Gtk, Adw
+import os
 import shutil
-from typing import Callable
+from typing import Callable, Optional
 from cleanarch.cleaner import build_update_script
+from cleanarch.views.password_dialog import PasswordDialog
 
 class UpdateView(Adw.PreferencesPage):
     def __init__(
@@ -72,6 +74,15 @@ class UpdateView(Adw.PreferencesPage):
         self.add(group)
 
     def _run_task(self, task: str):
-        script = build_update_script(task)
-        if self.on_start_update:
-            self.on_start_update(script)
+        if task in ("full_update", "keyring") and os.geteuid() != 0:
+            def on_pw_success(password: str):
+                script = build_update_script(task, has_sudo_pass=True)
+                if self.on_start_update:
+                    self.on_start_update(script, password)
+
+            dlg = PasswordDialog(self.get_root(), on_success=on_pw_success)
+            dlg.present()
+        else:
+            script = build_update_script(task, has_sudo_pass=False)
+            if self.on_start_update:
+                self.on_start_update(script, None)

@@ -6,9 +6,11 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Gtk, Adw, GLib
-from typing import Callable, Dict, List
+import os
 import threading
+from typing import Callable, Dict, List, Optional
 from cleanarch.cleaner import scan_all_items, format_size, build_clean_script, CleanItem
+from cleanarch.views.password_dialog import PasswordDialog
 
 class CleanView(Adw.PreferencesPage):
     def __init__(
@@ -153,6 +155,16 @@ class CleanView(Adw.PreferencesPage):
                 self.on_toast("Выберите хотя бы один пункт для очистки!")
             return
 
-        script = build_clean_script(selected_ids)
-        if self.on_start_clean:
-            self.on_start_clean(script)
+        needs_root = any(self.items.get(i) and self.items[i].requires_root for i in selected_ids)
+        if needs_root and os.geteuid() != 0:
+            def on_pw_success(password: str):
+                script = build_clean_script(selected_ids, has_sudo_pass=True)
+                if self.on_start_clean:
+                    self.on_start_clean(script, password)
+
+            dlg = PasswordDialog(self.get_root(), on_success=on_pw_success)
+            dlg.present()
+        else:
+            script = build_clean_script(selected_ids, has_sudo_pass=False)
+            if self.on_start_clean:
+                self.on_start_clean(script, None)

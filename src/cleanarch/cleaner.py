@@ -201,18 +201,18 @@ def scan_all_items() -> Dict[str, CleanItem]:
 
     return items
 
-def build_clean_script(selected_ids: List[str]) -> str:
+def build_clean_script(selected_ids: List[str], has_sudo_pass: bool = False) -> str:
     """Генерирует bash-скрипт для последовательного выполнения выбранных задач очистки."""
     commands = []
     commands.append('echo "=== [CleanArch] Начинаем очистку системы ==="')
 
-    # Thumbnails (user)
+    # Thumbnails (пользователь)
     if "thumbnails" in selected_ids:
         commands.append('echo ""')
         commands.append('echo "-> Очистка кэша миниатюр..."')
         commands.append('rm -rf ~/.cache/thumbnails/* && echo "✓ Кэш миниатюр очищен"')
 
-    # yay cache (user)
+    # yay cache (пользователь)
     if "yay_cache" in selected_ids:
         commands.append('echo ""')
         commands.append('echo "-> Очистка кэша yay..."')
@@ -222,7 +222,7 @@ def build_clean_script(selected_ids: List[str]) -> str:
             commands.append('rm -rf ~/.cache/yay/* || true')
         commands.append('echo "✓ Кэш yay очищен"')
 
-    # Flatpak unused (user)
+    # Flatpak unused (пользователь)
     if "flatpak_unused" in selected_ids and shutil.which("flatpak"):
         commands.append('echo ""')
         commands.append('echo "-> Удаление неиспользуемых рантаймов Flatpak..."')
@@ -256,12 +256,15 @@ def build_clean_script(selected_ids: List[str]) -> str:
 
     if root_cmds:
         commands.append('echo ""')
-        commands.append('echo "-> Выполнение системных операций (требуются права root)..."')
+        commands.append('echo "-> Выполнение системных операций (права root)..."')
         inner = " && \\\n    ".join(root_cmds)
         if os.geteuid() == 0:
             commands.append(inner)
+        elif has_sudo_pass:
+            # Автоматическая подача пароля через stdin в sudo -S
+            commands.append(f'printf "%s\\n" "$CLEANARCH_PASS" | sudo -S bash -c "{inner}"')
+            commands.append('unset CLEANARCH_PASS')
         elif shutil.which("pkexec"):
-            # Запуск через pkexec для графического запроса пароля
             commands.append(f'pkexec bash -c "{inner}"')
         else:
             commands.append(f'sudo bash -c "{inner}"')
@@ -270,25 +273,37 @@ def build_clean_script(selected_ids: List[str]) -> str:
     commands.append('echo "=== [CleanArch] Очистка успешно завершена! ✨ ==="')
     return "\n".join(commands)
 
-def build_update_script(task: str) -> str:
-    """Генерирует скрипт для обновления."""
+def build_update_script(task: str, has_sudo_pass: bool = False) -> str:
+    """Генерирует скрипт для обновления с поддержкой автоподстановки пароля."""
     commands = []
+    if has_sudo_pass:
+        # Предварительно валидируем sudo токен через переданный пароль
+        commands.append('printf "%s\\n" "$CLEANARCH_PASS" | sudo -S -v 2>/dev/null || true')
+
     if task == "full_update":
         commands.append('echo "=== [CleanArch] Обновление системы и AUR ==="')
         if shutil.which("yay"):
             commands.append('yay -Syu --noconfirm')
+        elif has_sudo_pass:
+            commands.append('printf "%s\\n" "$CLEANARCH_PASS" | sudo -S pacman -Syu --noconfirm')
         elif shutil.which("pkexec"):
             commands.append('pkexec pacman -Syu --noconfirm')
         else:
             commands.append('sudo pacman -Syu --noconfirm')
     elif task == "keyring":
         commands.append('echo "=== [CleanArch] Обновление ключей archlinux-keyring ==="')
-        if shutil.which("pkexec"):
+        if has_sudo_pass:
+            commands.append('printf "%s\\n" "$CLEANARCH_PASS" | sudo -S pacman -Sy archlinux-keyring --noconfirm')
+        elif shutil.which("pkexec"):
             commands.append('pkexec pacman -Sy archlinux-keyring --noconfirm')
         else:
             commands.append('sudo pacman -Sy archlinux-keyring --noconfirm')
     elif task == "flatpak":
         commands.append('echo "=== [CleanArch] Обновление пакетов Flatpak ==="')
         commands.append('flatpak update -y')
+
+    if has_sudo_pass:
+        commands.append('unset CLEANARCH_PASS')
+
     commands.append('echo "=== [CleanArch] Процесс завершен! ==="')
     return "\n".join(commands)

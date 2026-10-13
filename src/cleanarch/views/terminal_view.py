@@ -6,6 +6,7 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Gtk, Adw, GLib, Gdk
+import os
 import subprocess
 import threading
 from typing import Callable, Optional
@@ -93,7 +94,12 @@ class TerminalView(Gtk.Box):
         self.buffer.set_text("")
         self.status_label.set_text("Лог очищен")
 
-    def run_script(self, script: str, on_complete: Optional[Callable[[int], None]] = None):
+    def run_script(
+        self,
+        script: str,
+        on_complete: Optional[Callable[[int], None]] = None,
+        password: Optional[str] = None
+    ):
         """Запускает выполнение bash-скрипта в отдельном потоке с потоковым выводом."""
         if self.current_process and self.current_process.poll() is None:
             if self.on_toast:
@@ -108,12 +114,17 @@ class TerminalView(Gtk.Box):
 
         def worker():
             try:
+                env = os.environ.copy()
+                if password:
+                    env["CLEANARCH_PASS"] = password
+
                 proc = subprocess.Popen(
                     ["bash", "-c", script],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
                     text=True,
-                    bufsize=1
+                    bufsize=1,
+                    env=env
                 )
                 self.current_process = proc
 

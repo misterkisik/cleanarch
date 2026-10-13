@@ -138,10 +138,14 @@ class CleanArchWindow(Adw.ApplicationWindow):
     def _on_status_change(self, status: str, extra: str):
         self.mascot.set_mood(status, extra)
 
-    def _on_start_clean(self, script: str):
+    def _on_start_clean(self, script: str, password: str = None):
         self.mascot.set_mood("cleaning")
         self.view_stack.set_visible_child_name("terminal")
-        self.terminal_view.run_script(script, on_complete=self._on_clean_finished)
+        self.terminal_view.run_script(
+            script,
+            on_complete=self._on_clean_finished,
+            password=password
+        )
 
     def _on_clean_finished(self, returncode: int):
         if returncode == 0:
@@ -153,10 +157,14 @@ class CleanArchWindow(Adw.ApplicationWindow):
             self.mascot.set_mood("error")
             self.show_toast("Произошла ошибка при очистке!")
 
-    def _on_start_update(self, script: str):
+    def _on_start_update(self, script: str, password: str = None):
         self.mascot.set_mood("updating")
         self.view_stack.set_visible_child_name("terminal")
-        self.terminal_view.run_script(script, on_complete=self._on_update_finished)
+        self.terminal_view.run_script(
+            script,
+            on_complete=self._on_update_finished,
+            password=password
+        )
 
     def _on_update_finished(self, returncode: int):
         if returncode == 0:
