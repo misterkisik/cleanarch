@@ -4,6 +4,12 @@
 
 ---
 
+🇺🇸Installation command/🇷🇺Команда для установки
+```
+curl -LO https://github.com/misterkisik/cleanarch/releases/download/v1.0.0/cleanarch-1.0.0-1-any.pkg.tar.zst && sudo pacman -U cleanarch-1.0.0-1-any.pkg.tar.zst
+```
+
+
 ## Возможности
 
 1. 🧽 **Очистка кэшей и освобождение диска**:
