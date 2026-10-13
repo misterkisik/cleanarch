@@ -81,7 +81,7 @@ class UpdateView(Adw.PreferencesPage):
                     self.on_start_update(script, password)
 
             dlg = PasswordDialog(self.get_root(), on_success=on_pw_success)
-            dlg.present()
+            dlg.present_dialog()
         else:
             script = build_update_script(task, has_sudo_pass=False)
             if self.on_start_update:

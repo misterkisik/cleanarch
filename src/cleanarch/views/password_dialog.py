@@ -10,93 +10,128 @@ import subprocess
 import threading
 from typing import Callable
 
-class PasswordDialog:
+class PasswordDialog(Adw.Window):
     def __init__(self, parent_window: Gtk.Window, on_success: Callable[[str], None]):
-        self.parent_window = parent_window
+        super().__init__(transient_for=parent_window, modal=True)
         self.on_success = on_success
+        self.set_title("Права администратора")
+        self.set_default_size(380, 260)
+        self.set_resizable(False)
+        self.set_destroy_with_parent(True)
 
-        self.dialog = Adw.AlertDialog()
-        self.dialog.set_heading("Требуются права администратора")
-        self.dialog.set_body("Для очистки системных кэшей и логов введите пароль вашей учётной записи:")
+        toolbar_view = Adw.ToolbarView()
+        self.set_content(toolbar_view)
 
-        # Контейнер для поля ввода и ошибки
-        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
-        box.set_margin_start(8)
-        box.set_margin_end(8)
-        box.set_margin_top(4)
-        box.set_margin_bottom(4)
+        # HeaderBar
+        header_bar = Adw.HeaderBar()
+        header_bar.set_show_start_title_buttons(False)
+        header_bar.set_show_end_title_buttons(False)
 
+        cancel_btn = Gtk.Button(label="Отмена")
+        cancel_btn.add_css_class("flat")
+        cancel_btn.connect("clicked", lambda _: self.close())
+        header_bar.pack_start(cancel_btn)
+
+        self.confirm_btn = Gtk.Button(label="Подтвердить")
+        self.confirm_btn.add_css_class("suggested-action")
+        self.confirm_btn.connect("clicked", lambda _: self._on_confirm())
+        header_bar.pack_end(self.confirm_btn)
+
+        toolbar_view.add_top_bar(header_bar)
+
+        # Содержимое
+        content_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        content_box.set_margin_start(24)
+        content_box.set_margin_end(24)
+        content_box.set_margin_top(16)
+        content_box.set_margin_bottom(16)
+
+        # Иконка ключа
+        icon = Gtk.Image.new_from_icon_name("dialog-password-symbolic")
+        icon.set_pixel_size(48)
+        icon.add_css_class("accent")
+        content_box.append(icon)
+
+        # Пояснение
+        title_label = Gtk.Label(label="Требуются права администратора")
+        title_label.add_css_class("title-3")
+        content_box.append(title_label)
+
+        desc_label = Gtk.Label(
+            label="Для очистки системных кэшей и логов введите пароль вашей учётной записи:"
+        )
+        desc_label.set_wrap(True)
+        desc_label.set_justify(Gtk.Justification.CENTER)
+        desc_label.add_css_class("dim-label")
+        desc_label.add_css_class("caption")
+        content_box.append(desc_label)
+
+        # Поле ввода пароля
         self.entry = Gtk.PasswordEntry()
         self.entry.set_show_peek_icon(True)
-        self.entry.set_activates_default(True)
-        box.append(self.entry)
+        self.entry.connect("activate", lambda _: self._on_confirm())
+        content_box.append(self.entry)
 
-        # Метка ошибки
+        # Ошибка
         self.error_label = Gtk.Label()
         self.error_label.add_css_class("error")
         self.error_label.set_visible(False)
-        box.append(self.error_label)
+        content_box.append(self.error_label)
 
-        # Спиннер проверки
+        # Спиннер
         self.spinner = Gtk.Spinner()
         self.spinner.set_visible(False)
-        box.append(self.spinner)
+        content_box.append(self.spinner)
 
-        self.dialog.set_extra_child(box)
+        toolbar_view.set_content(content_box)
 
-        # Кнопки
-        self.dialog.add_response("cancel", "Отмена")
-        self.dialog.add_response("confirm", "Подтвердить")
-        self.dialog.set_response_appearance("confirm", Adw.ResponseAppearance.SUGGESTED)
-        self.dialog.set_default_response("confirm")
-
-        self.dialog.connect("response", self._on_response)
-
-    def present(self):
-        self.dialog.present(self.parent_window)
-        # Фокус на поле ввода после отображения
+    def present_dialog(self):
+        self.present()
         GLib.idle_add(self.entry.grab_focus)
 
-    def _on_response(self, _dialog, response: str):
-        if response == "confirm":
-            password = self.entry.get_text()
-            if not password:
-                self.error_label.set_text("Пожалуйста, введите пароль")
-                self.error_label.set_visible(True)
-                self.present()
-                return
+    def _on_confirm(self):
+        password = self.entry.get_text()
+        if not password:
+            self.error_label.set_text("Пожалуйста, введите пароль")
+            self.error_label.set_visible(True)
+            self.entry.grab_focus()
+            return
 
-            self.error_label.set_visible(False)
-            self.spinner.set_visible(True)
-            self.spinner.start()
+        self.error_label.set_visible(False)
+        self.spinner.set_visible(True)
+        self.spinner.start()
+        self.confirm_btn.set_sensitive(False)
+        self.entry.set_sensitive(False)
 
-            # Проверяем пароль в фоне
-            def check_worker():
-                try:
-                    proc = subprocess.run(
-                        ["sudo", "-S", "-k", "-v"],
-                        input=f"{password}\n",
-                        capture_output=True,
-                        text=True,
-                        timeout=6
-                    )
-                    success = (proc.returncode == 0)
-                except Exception:
-                    success = False
+        def check_worker():
+            try:
+                proc = subprocess.run(
+                    ["sudo", "-S", "-k", "-v"],
+                    input=f"{password}\n",
+                    capture_output=True,
+                    text=True,
+                    timeout=6
+                )
+                success = (proc.returncode == 0)
+            except Exception:
+                success = False
 
-                GLib.idle_add(self._on_check_complete, success, password)
+            GLib.idle_add(self._on_check_complete, success, password)
 
-            threading.Thread(target=check_worker, daemon=True).start()
+        threading.Thread(target=check_worker, daemon=True).start()
 
     def _on_check_complete(self, success: bool, password: str):
         self.spinner.stop()
         self.spinner.set_visible(False)
+        self.confirm_btn.set_sensitive(True)
+        self.entry.set_sensitive(True)
 
         if success:
+            self.close()
             if self.on_success:
                 self.on_success(password)
         else:
             self.error_label.set_text("❌ Неверный пароль. Попробуйте снова.")
             self.error_label.set_visible(True)
             self.entry.set_text("")
-            self.present()
+            self.entry.grab_focus()
