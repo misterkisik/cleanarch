@@ -1,4 +1,4 @@
-[![Telegram](https://img.shields.io/badge/Telegram_Канал-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/m1sterk1s1kgithub)
+[![Telegram](https://img.shields.io/badge/Telegram_Канал-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/justutilities)
 
 
 # CleanArch 🧹✨
