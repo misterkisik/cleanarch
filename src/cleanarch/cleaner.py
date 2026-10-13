@@ -116,8 +116,8 @@ def scan_all_items() -> Dict[str, CleanItem]:
     pacman_size = get_dir_size(pacman_cache_dir)
     items["pacman_cache"] = CleanItem(
         id="pacman_cache",
-        title="Кэш пакетов pacman",
-        description="Старые скачанные версии пакетов в /var/cache/pacman/pkg (оставляет 2 свежие версии)",
+        title="Кэш пакетов pacman (полная очистка)",
+        description="Удаляет все архивы пакетов (.pkg.tar.zst) из /var/cache/pacman/pkg (-Scc) и временные файлы",
         size_bytes=pacman_size,
         size_formatted=format_size(pacman_size),
         count=0,
@@ -242,13 +242,10 @@ def build_clean_script(selected_ids: List[str], has_sudo_pass: bool = False) -> 
         commands.append('echo "-> Выполнение системных операций (права root)..."')
 
         if "pacman_cache" in selected_ids:
-            commands.append('echo "-> Очистка старых пакетов pacman..."')
-            commands.append('if command -v paccache &>/dev/null; then')
-            commands.append('    sudo paccache -rk2 || true')
-            commands.append('else')
-            commands.append('    printf "y\\n" | sudo pacman -Sc --noconfirm 2>/dev/null || true')
-            commands.append('fi')
-            commands.append('echo "✓ Кэш pacman очищен"')
+            commands.append('echo "-> Полная очистка кэша pacman (удаление всех архивов пакетов)..."')
+            commands.append('sudo rm -rf /var/cache/pacman/pkg/download-* 2>/dev/null || true')
+            commands.append('printf "y\\ny\\n" | sudo pacman -Scc --noconfirm 2>/dev/null || true')
+            commands.append('echo "✓ Кэш pacman полностью очищен"')
 
         if "journal" in selected_ids:
             commands.append('echo "-> Сокращение системного журнала (до 3 дней)..."')
