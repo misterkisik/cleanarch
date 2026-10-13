@@ -16,6 +16,8 @@ def find_mascot_path() -> Optional[str]:
     candidates = [
         os.path.join(os.path.dirname(__file__), "..", "..", "data", "mascot.png"),
         "/usr/share/cleanarch/mascot.png",
+        "/home/misterkisik/Загрузки/qvAY0YSE-Photoroom.png",
+        os.path.expanduser("~/Загрузки/qvAY0YSE-Photoroom.png"),
         "/home/misterkisik/Загрузки/Dwt4vx9V-Photoroom.png",
         os.path.expanduser("~/Загрузки/Dwt4vx9V-Photoroom.png"),
     ]

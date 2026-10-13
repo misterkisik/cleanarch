@@ -11,7 +11,8 @@ from cleanarch.mascot import MascotWidget
 from cleanarch.views.clean_view import CleanView
 from cleanarch.views.update_view import UpdateView
 from cleanarch.views.terminal_view import TerminalView
-from cleanarch.i18n import tr, set_language, get_current_language, SUPPORTED_LANGUAGES
+from cleanarch.views.language_dialog import FirstRunLanguageDialog
+from cleanarch.i18n import tr, set_language, get_current_language, SUPPORTED_LANGUAGES, is_first_run
 
 class CleanArchWindow(Adw.ApplicationWindow):
     def __init__(self, **kwargs):
@@ -122,6 +123,20 @@ class CleanArchWindow(Adw.ApplicationWindow):
         self._setup_actions()
         self._build_menu()
 
+        # Проверка первого запуска для выбора языка
+        GLib.idle_add(self._check_first_run)
+
+    def _check_first_run(self):
+        if is_first_run():
+            dlg = FirstRunLanguageDialog(self, on_completed=self._on_first_run_completed)
+            dlg.present()
+        return False
+
+    def _on_first_run_completed(self, lang: str):
+        self.retranslate()
+        self._build_menu()
+        self.show_toast(tr("toast_lang_changed"))
+
     def _setup_actions(self):
         about_action = Gio.SimpleAction.new("about", None)
         about_action.connect("activate", self._on_about_activated)
@@ -139,9 +154,7 @@ class CleanArchWindow(Adw.ApplicationWindow):
             ("ru", "🇷🇺 Русский"),
             ("en", "🇬🇧 English"),
             ("es", "🇪🇸 Español"),
-            ("ja", "🇯🇵 日本語"),
             ("fr", "🇫🇷 Français"),
-            ("zh", "🇨🇳 简体中文"),
         ]
         curr = get_current_language()
         for code, name in lang_items:
