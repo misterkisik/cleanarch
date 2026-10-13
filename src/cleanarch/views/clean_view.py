@@ -11,6 +11,7 @@ import threading
 from typing import Callable, Dict, List, Optional
 from cleanarch.cleaner import scan_all_items, format_size, build_clean_script, CleanItem
 from cleanarch.views.password_dialog import PasswordDialog
+from cleanarch.i18n import tr
 
 class CleanView(Adw.PreferencesPage):
     def __init__(
@@ -25,22 +26,20 @@ class CleanView(Adw.PreferencesPage):
         self.on_toast = on_toast
         
         self.items: Dict[str, CleanItem] = {}
+        self.rows: Dict[str, Adw.ActionRow] = {}
         self.check_buttons: Dict[str, Gtk.CheckButton] = {}
         self.size_labels: Dict[str, Gtk.Label] = {}
         self.is_scanning = False
 
         # Группа сводки и кнопок действий
-        summary_group = Adw.PreferencesGroup()
-        summary_group.set_title("Очистка дискового пространства")
-        summary_group.set_description(
-            "Выберите категории мусора и кэшей, которые хотите удалить. "
-            "Системные операции автоматически запросят подтверждение."
-        )
+        self.summary_group = Adw.PreferencesGroup()
+        self.summary_group.set_title(tr("clean_title"))
+        self.summary_group.set_description(tr("clean_desc"))
 
         # Строка общего размера
         self.total_row = Adw.ActionRow()
-        self.total_row.set_title("Всего можно освободить")
-        self.total_row.set_subtitle("Выполняется начальный подсчёт...")
+        self.total_row.set_title(tr("total_to_free"))
+        self.total_row.set_subtitle(tr("status_calculating"))
         self.total_row.set_icon_name("drive-harddisk-symbolic")
 
         # Кнопки действий справа от общей суммы
@@ -48,27 +47,60 @@ class CleanView(Adw.PreferencesPage):
         btn_box.set_valign(Gtk.Align.CENTER)
 
         self.rescan_btn = Gtk.Button.new_from_icon_name("view-refresh-symbolic")
-        self.rescan_btn.set_tooltip_text("Пересчитать размеры кэшей")
+        self.rescan_btn.set_tooltip_text(tr("btn_rescan_tooltip"))
         self.rescan_btn.add_css_class("flat")
         self.rescan_btn.connect("clicked", lambda _: self.start_scan())
         btn_box.append(self.rescan_btn)
 
-        self.clean_btn = Gtk.Button(label="Очистить выбранное")
+        self.clean_btn = Gtk.Button(label=tr("btn_clean"))
         self.clean_btn.add_css_class("suggested-action")
         self.clean_btn.connect("clicked", self._on_clean_clicked)
         btn_box.append(self.clean_btn)
 
         self.total_row.add_suffix(btn_box)
-        summary_group.add(self.total_row)
-        self.add(summary_group)
+        self.summary_group.add(self.total_row)
+        self.add(self.summary_group)
 
         # Группа элементов очистки
         self.items_group = Adw.PreferencesGroup()
-        self.items_group.set_title("Категории для очистки")
+        self.items_group.set_title(tr("categories_group_title"))
         self.add(self.items_group)
 
         # Первичное сканирование
         self.start_scan()
+
+    def retranslate(self):
+        """Обновляет все заголовки и строки списка при смене языка."""
+        self.summary_group.set_title(tr("clean_title"))
+        self.summary_group.set_description(tr("clean_desc"))
+        self.total_row.set_title(tr("total_to_free"))
+        self.rescan_btn.set_tooltip_text(tr("btn_rescan_tooltip"))
+        self.clean_btn.set_label(tr("btn_clean"))
+        self.items_group.set_title(tr("categories_group_title"))
+
+        for item_id, row in self.rows.items():
+            if item_id == "pacman_cache":
+                row.set_title(tr("cat_pacman_title"))
+                row.set_subtitle(tr("cat_pacman_desc"))
+            elif item_id == "yay_cache":
+                row.set_title(tr("cat_yay_title"))
+                row.set_subtitle(tr("cat_yay_desc"))
+            elif item_id == "journal":
+                row.set_title(tr("cat_journal_title"))
+                row.set_subtitle(tr("cat_journal_desc"))
+            elif item_id == "orphans":
+                count = self.items[item_id].count if item_id in self.items else 0
+                row.set_title(tr("cat_orphans_title"))
+                row.set_subtitle(tr("cat_orphans_desc", count=count))
+            elif item_id == "thumbnails":
+                row.set_title(tr("cat_thumbnails_title"))
+                row.set_subtitle(tr("cat_thumbnails_desc"))
+            elif item_id == "flatpak_unused":
+                count = self.items[item_id].count if item_id in self.items else 0
+                row.set_title(tr("cat_flatpak_title"))
+                row.set_subtitle(tr("cat_flatpak_desc", count=count))
+
+        self._update_total_summary()
 
     def start_scan(self):
         """Запускает фоновое сканирование объемов кэша."""
@@ -77,7 +109,7 @@ class CleanView(Adw.PreferencesPage):
         self.is_scanning = True
         self.rescan_btn.set_sensitive(False)
         self.clean_btn.set_sensitive(False)
-        self.total_row.set_subtitle("Сканирование каталогов и журналов...")
+        self.total_row.set_subtitle(tr("status_scanning"))
         if self.on_status_change:
             self.on_status_change("scanning", "")
 
@@ -107,6 +139,7 @@ class CleanView(Adw.PreferencesPage):
                 row.add_prefix(check)
                 row.set_activatable_widget(check)
                 self.check_buttons[item_id] = check
+                self.rows[item_id] = row
 
                 size_lbl = Gtk.Label(label=item.size_formatted)
                 size_lbl.add_css_class("monospace")
@@ -140,7 +173,9 @@ class CleanView(Adw.PreferencesPage):
                 selected_count += 1
 
         formatted = format_size(total_bytes)
-        self.total_row.set_subtitle(f"Выбрано категорий: {selected_count}. Будет освобождено около ~{formatted}")
+        self.total_row.set_subtitle(
+            tr("status_selected_summary", count=selected_count, size=formatted)
+        )
         self.clean_btn.set_sensitive(selected_count > 0)
 
         if self.on_status_change:
@@ -152,7 +187,7 @@ class CleanView(Adw.PreferencesPage):
         ]
         if not selected_ids:
             if self.on_toast:
-                self.on_toast("Выберите хотя бы один пункт для очистки!")
+                self.on_toast(tr("toast_no_selection"))
             return
 
         needs_root = any(self.items.get(i) and self.items[i].requires_root for i in selected_ids)

@@ -9,6 +9,8 @@ gi.require_version("Adw", "1")
 from gi.repository import Gtk, Adw, Gdk
 from typing import Optional
 
+from cleanarch.i18n import tr
+
 def find_mascot_path() -> Optional[str]:
     """Находит файл изображения маскота в системе или локальном каталоге."""
     candidates = [
@@ -32,6 +34,9 @@ class MascotWidget(Gtk.Box):
         self.set_margin_top(16)
         self.set_margin_bottom(16)
 
+        self._current_mood = "idle"
+        self._current_extra = ""
+
         # 1. Диалоговое облачко (реплика персонажа)
         self.bubble_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         self.bubble_box.add_css_class("card")
@@ -47,7 +52,7 @@ class MascotWidget(Gtk.Box):
         icon.add_css_class("accent")
         header_box.append(icon)
 
-        self.name_label = Gtk.Label(label="CleanArch Помощник")
+        self.name_label = Gtk.Label(label=tr("mascot_name"))
         self.name_label.add_css_class("heading")
         header_box.append(self.name_label)
         self.bubble_box.append(header_box)
@@ -92,6 +97,11 @@ class MascotWidget(Gtk.Box):
         # Начальная фраза
         self.set_mood("idle")
 
+    def retranslate(self):
+        """Обновляет имя маскота и реплику при смене языка."""
+        self.name_label.set_text(tr("mascot_name"))
+        self.set_mood(self._current_mood, self._current_extra)
+
     def set_speech(self, phrase: str, subtitle: str = ""):
         """Устанавливает текст реплики и подпись."""
         self.phrase_label.set_text(phrase)
@@ -100,38 +110,41 @@ class MascotWidget(Gtk.Box):
 
     def set_mood(self, mood: str, extra_info: str = ""):
         """Переключает реплику в зависимости от текущего состояния программы."""
+        self._current_mood = mood
+        self._current_extra = extra_info
+
         if mood == "idle":
             self.set_speech(
-                "Привет! Пора навести чистоту в Arch Linux! Выберите кэши для очистки и нажмите кнопку запуска.",
-                "Готова к работе"
+                tr("mascot_idle"),
+                tr("mascot_ready")
             )
         elif mood == "scanning":
             self.set_speech(
-                "Сканирую диски... Проверяю размеры кэшей pacman, yay и системных журналов.",
-                "Идет подсчет объемов мусора..."
+                tr("mascot_scanning"),
+                tr("mascot_scanning_sub")
             )
         elif mood == "scanned":
             self.set_speech(
-                f"Сканирование завершено! Обнаружено мусора: {extra_info}. Готова освободить место!",
-                f"Найдено: {extra_info}"
+                tr("mascot_scanned", extra=extra_info),
+                tr("mascot_scanned_sub", extra=extra_info)
             )
         elif mood == "cleaning":
             self.set_speech(
-                "Очищаю кэши и ненужные пакеты... Система будет работать быстрее и чище!",
-                "Выполняется очистка..."
+                tr("mascot_cleaning"),
+                tr("mascot_cleaning_sub")
             )
         elif mood == "done":
             self.set_speech(
-                "Отличная работа! Очистка успешно завершена, диск свободен ✨",
-                extra_info or "Система оптимизирована"
+                tr("mascot_done"),
+                extra_info or tr("mascot_done_sub")
             )
         elif mood == "updating":
             self.set_speech(
-                "Обновляю систему... Загружаю свежие версии пакетов Arch Linux!",
-                "Идет процесс обновления..."
+                tr("mascot_updating"),
+                tr("mascot_updating_sub")
             )
         elif mood == "error":
             self.set_speech(
-                "Ой! В процессе возникла ошибка. Перейдите во вкладку «Лог / Консоль», чтобы посмотреть подробности.",
-                "Требуется внимание"
+                tr("mascot_error"),
+                tr("mascot_error_sub")
             )

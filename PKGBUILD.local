@@ -29,7 +29,11 @@ sha256sums=()
 
 build() {
     cd "$startdir"
-    python -m build --wheel --no-isolation
+    if command -v python -m build &>/dev/null; then
+        python -m build --wheel --no-isolation
+    else
+        python setup.py bdist_wheel
+    fi
 }
 
 package() {
@@ -37,8 +41,12 @@ package() {
     python -m installer --destdir="$pkgdir" dist/*.whl
 
     install -Dm644 "$startdir/data/cleanarch.desktop" "$pkgdir/usr/share/applications/cleanarch.desktop"
+    ln -s cleanarch.desktop "$pkgdir/usr/share/applications/org.cleanarch.CleanArch.desktop"
     install -Dm644 "$startdir/data/cleanarch.png" "$pkgdir/usr/share/icons/hicolor/512x512/apps/cleanarch.png"
+    ln -s cleanarch.png "$pkgdir/usr/share/icons/hicolor/512x512/apps/org.cleanarch.CleanArch.png"
     install -Dm644 "$startdir/data/cleanarch.png" "$pkgdir/usr/share/pixmaps/cleanarch.png"
+    ln -s cleanarch.png "$pkgdir/usr/share/pixmaps/org.cleanarch.CleanArch.png"
     install -Dm644 "$startdir/data/cleanarch.svg" "$pkgdir/usr/share/icons/hicolor/scalable/apps/cleanarch.svg"
+    ln -s cleanarch.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/org.cleanarch.CleanArch.svg"
     install -Dm644 "$startdir/data/mascot.png" "$pkgdir/usr/share/cleanarch/mascot.png"
 }

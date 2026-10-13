@@ -9,12 +9,13 @@ from gi.repository import Gtk, Adw, GLib
 import subprocess
 import threading
 from typing import Callable
+from cleanarch.i18n import tr
 
 class PasswordDialog(Adw.Window):
     def __init__(self, parent_window: Gtk.Window, on_success: Callable[[str], None]):
         super().__init__(transient_for=parent_window, modal=True)
         self.on_success = on_success
-        self.set_title("Права администратора")
+        self.set_title(tr("pw_title"))
         self.set_default_size(380, 260)
         self.set_resizable(False)
         self.set_destroy_with_parent(True)
@@ -27,12 +28,12 @@ class PasswordDialog(Adw.Window):
         header_bar.set_show_start_title_buttons(False)
         header_bar.set_show_end_title_buttons(False)
 
-        cancel_btn = Gtk.Button(label="Отмена")
+        cancel_btn = Gtk.Button(label=tr("pw_cancel"))
         cancel_btn.add_css_class("flat")
         cancel_btn.connect("clicked", lambda _: self.close())
         header_bar.pack_start(cancel_btn)
 
-        self.confirm_btn = Gtk.Button(label="Подтвердить")
+        self.confirm_btn = Gtk.Button(label=tr("pw_confirm"))
         self.confirm_btn.add_css_class("suggested-action")
         self.confirm_btn.connect("clicked", lambda _: self._on_confirm())
         header_bar.pack_end(self.confirm_btn)
@@ -53,12 +54,12 @@ class PasswordDialog(Adw.Window):
         content_box.append(icon)
 
         # Пояснение
-        title_label = Gtk.Label(label="Требуются права администратора")
+        title_label = Gtk.Label(label=tr("pw_heading"))
         title_label.add_css_class("title-3")
         content_box.append(title_label)
 
         desc_label = Gtk.Label(
-            label="Для очистки системных кэшей и логов введите пароль вашей учётной записи:"
+            label=tr("pw_body")
         )
         desc_label.set_wrap(True)
         desc_label.set_justify(Gtk.Justification.CENTER)
@@ -90,7 +91,7 @@ class PasswordDialog(Adw.Window):
     def _on_confirm(self):
         password = self.entry.get_text()
         if not password:
-            self.error_label.set_text("Пожалуйста, введите пароль")
+            self.error_label.set_text(tr("pw_error_empty"))
             self.error_label.set_visible(True)
             self.set_focus(self.entry)
             return
@@ -135,7 +136,7 @@ class PasswordDialog(Adw.Window):
             if self.on_success:
                 self.on_success(password)
         else:
-            self.error_label.set_text("❌ Неверный пароль. Попробуйте снова.")
+            self.error_label.set_text(tr("pw_error_invalid"))
             self.error_label.set_visible(True)
             self.entry.set_text("")
             self.set_focus(self.entry)

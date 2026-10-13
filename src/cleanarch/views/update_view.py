@@ -11,6 +11,7 @@ import shutil
 from typing import Callable, Optional
 from cleanarch.cleaner import build_update_script
 from cleanarch.views.password_dialog import PasswordDialog
+from cleanarch.i18n import tr
 
 class UpdateView(Adw.PreferencesPage):
     def __init__(
@@ -22,56 +23,74 @@ class UpdateView(Adw.PreferencesPage):
         self.on_start_update = on_start_update
         self.on_toast = on_toast
 
-        group = Adw.PreferencesGroup()
-        group.set_title("Обновление системы и репозиториев")
-        group.set_description(
-            "Регулярное обновление обеспечивает безопасность и актуальность вашего ПО в Arch Linux."
-        )
+        self.group = Adw.PreferencesGroup()
+        self.group.set_title(tr("update_title"))
+        self.group.set_description(tr("update_desc"))
 
         # 1. Полное обновление pacman + yay
-        full_row = Adw.ActionRow()
-        full_row.set_title("Полное обновление (pacman + AUR)")
-        full_row.set_subtitle("Синхронизирует репозитории и обновляет все пакеты системы и пользовательские программы AUR")
-        full_row.set_icon_name("software-update-available-symbolic")
+        self.full_row = Adw.ActionRow()
+        self.full_row.set_title(tr("up_full_title"))
+        self.full_row.set_subtitle(tr("up_full_desc"))
+        self.full_row.set_icon_name("software-update-available-symbolic")
 
-        full_btn = Gtk.Button(label="Обновить систему")
-        full_btn.set_valign(Gtk.Align.CENTER)
-        full_btn.add_css_class("suggested-action")
-        full_btn.connect("clicked", lambda _: self._run_task("full_update"))
-        full_row.add_suffix(full_btn)
-        full_row.set_activatable_widget(full_btn)
-        group.add(full_row)
+        self.full_btn = Gtk.Button(label=tr("up_full_btn"))
+        self.full_btn.set_valign(Gtk.Align.CENTER)
+        self.full_btn.add_css_class("suggested-action")
+        self.full_btn.connect("clicked", lambda _: self._run_task("full_update"))
+        self.full_row.add_suffix(self.full_btn)
+        self.full_row.set_activatable_widget(self.full_btn)
+        self.group.add(self.full_row)
 
         # 2. Обновление ключей archlinux-keyring
-        keyring_row = Adw.ActionRow()
-        keyring_row.set_title("Обновить ключи безопасности (archlinux-keyring)")
-        keyring_row.set_subtitle("Исправляет частые ошибки 'corrupted package / invalid PGP signature' перед обновлением")
-        keyring_row.set_icon_name("dialog-password-symbolic")
+        self.keyring_row = Adw.ActionRow()
+        self.keyring_row.set_title(tr("up_keyring_title"))
+        self.keyring_row.set_subtitle(tr("up_keyring_desc"))
+        self.keyring_row.set_icon_name("dialog-password-symbolic")
 
-        keyring_btn = Gtk.Button(label="Обновить ключи")
-        keyring_btn.set_valign(Gtk.Align.CENTER)
-        keyring_btn.add_css_class("suggested-action")
-        keyring_btn.connect("clicked", lambda _: self._run_task("keyring"))
-        keyring_row.add_suffix(keyring_btn)
-        keyring_row.set_activatable_widget(keyring_btn)
-        group.add(keyring_row)
+        self.keyring_btn = Gtk.Button(label=tr("up_keyring_btn"))
+        self.keyring_btn.set_valign(Gtk.Align.CENTER)
+        self.keyring_btn.add_css_class("suggested-action")
+        self.keyring_btn.connect("clicked", lambda _: self._run_task("keyring"))
+        self.keyring_row.add_suffix(self.keyring_btn)
+        self.keyring_row.set_activatable_widget(self.keyring_btn)
+        self.group.add(self.keyring_row)
 
         # 3. Flatpak обновление (если установлен)
+        self.flatpak_row = None
+        self.flatpak_btn = None
         if shutil.which("flatpak"):
-            flatpak_row = Adw.ActionRow()
-            flatpak_row.set_title("Обновить приложения Flatpak")
-            flatpak_row.set_subtitle("Загружает последние версии установленных Flatpak программ и сред выполнения")
-            flatpak_row.set_icon_name("application-x-executable-symbolic")
+            self.flatpak_row = Adw.ActionRow()
+            self.flatpak_row.set_title(tr("up_flatpak_title"))
+            self.flatpak_row.set_subtitle(tr("up_flatpak_desc"))
+            self.flatpak_row.set_icon_name("application-x-executable-symbolic")
 
-            flatpak_btn = Gtk.Button(label="Обновить Flatpak")
-            flatpak_btn.set_valign(Gtk.Align.CENTER)
-            flatpak_btn.add_css_class("suggested-action")
-            flatpak_btn.connect("clicked", lambda _: self._run_task("flatpak"))
-            flatpak_row.add_suffix(flatpak_btn)
-            flatpak_row.set_activatable_widget(flatpak_btn)
-            group.add(flatpak_row)
+            self.flatpak_btn = Gtk.Button(label=tr("up_flatpak_btn"))
+            self.flatpak_btn.set_valign(Gtk.Align.CENTER)
+            self.flatpak_btn.add_css_class("suggested-action")
+            self.flatpak_btn.connect("clicked", lambda _: self._run_task("flatpak"))
+            self.flatpak_row.add_suffix(self.flatpak_btn)
+            self.flatpak_row.set_activatable_widget(self.flatpak_btn)
+            self.group.add(self.flatpak_row)
 
-        self.add(group)
+        self.add(self.group)
+
+    def retranslate(self):
+        """Обновляет все заголовки и кнопки страницы обновления при смене языка."""
+        self.group.set_title(tr("update_title"))
+        self.group.set_description(tr("update_desc"))
+
+        self.full_row.set_title(tr("up_full_title"))
+        self.full_row.set_subtitle(tr("up_full_desc"))
+        self.full_btn.set_label(tr("up_full_btn"))
+
+        self.keyring_row.set_title(tr("up_keyring_title"))
+        self.keyring_row.set_subtitle(tr("up_keyring_desc"))
+        self.keyring_btn.set_label(tr("up_keyring_btn"))
+
+        if self.flatpak_row and self.flatpak_btn:
+            self.flatpak_row.set_title(tr("up_flatpak_title"))
+            self.flatpak_row.set_subtitle(tr("up_flatpak_desc"))
+            self.flatpak_btn.set_label(tr("up_flatpak_btn"))
 
     def _run_task(self, task: str):
         if task in ("full_update", "keyring") and os.geteuid() != 0:

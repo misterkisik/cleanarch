@@ -8,6 +8,7 @@ import shutil
 import subprocess
 from dataclasses import dataclass
 from typing import List, Dict, Optional
+from cleanarch.i18n import tr
 
 @dataclass
 class CleanItem:
@@ -116,8 +117,8 @@ def scan_all_items() -> Dict[str, CleanItem]:
     pacman_size = get_dir_size(pacman_cache_dir)
     items["pacman_cache"] = CleanItem(
         id="pacman_cache",
-        title="Кэш пакетов pacman (полная очистка)",
-        description="Удаляет все архивы пакетов (.pkg.tar.zst) из /var/cache/pacman/pkg (-Scc) и временные файлы",
+        title=tr("cat_pacman_title"),
+        description=tr("cat_pacman_desc"),
         size_bytes=pacman_size,
         size_formatted=format_size(pacman_size),
         count=0,
@@ -131,8 +132,8 @@ def scan_all_items() -> Dict[str, CleanItem]:
     yay_size = get_dir_size(yay_cache_dir)
     items["yay_cache"] = CleanItem(
         id="yay_cache",
-        title="Кэш сборщика AUR (yay)",
-        description="Кэшированные репозитории и собранные исходники в ~/.cache/yay",
+        title=tr("cat_yay_title"),
+        description=tr("cat_yay_desc"),
         size_bytes=yay_size,
         size_formatted=format_size(yay_size),
         count=0,
@@ -145,8 +146,8 @@ def scan_all_items() -> Dict[str, CleanItem]:
     journal_size = get_journalctl_size()
     items["journal"] = CleanItem(
         id="journal",
-        title="Системный журнал (journalctl)",
-        description="Старые системные логи служб (будут сохранены логи за последние 3 дня)",
+        title=tr("cat_journal_title"),
+        description=tr("cat_journal_desc"),
         size_bytes=journal_size,
         size_formatted=format_size(journal_size),
         count=0,
@@ -159,10 +160,10 @@ def scan_all_items() -> Dict[str, CleanItem]:
     orphans = get_orphan_packages()
     items["orphans"] = CleanItem(
         id="orphans",
-        title="Пакеты-сироты (Orphans)",
-        description=f"Неиспользуемые пакеты-зависимости, оставшиеся после удаления программ ({len(orphans)} шт.)",
+        title=tr("cat_orphans_title"),
+        description=tr("cat_orphans_desc", count=len(orphans)),
         size_bytes=0,
-        size_formatted=f"{len(orphans)} пакетов" if orphans else "0 пакетов",
+        size_formatted=f"{len(orphans)} pkgs" if orphans else "0",
         count=len(orphans),
         requires_root=True,
         enabled=bool(orphans),
@@ -174,8 +175,8 @@ def scan_all_items() -> Dict[str, CleanItem]:
     thumb_size = get_dir_size(thumb_dir)
     items["thumbnails"] = CleanItem(
         id="thumbnails",
-        title="Кэш миниатюр изображений",
-        description="Временные превью картинок и видео в ~/.cache/thumbnails",
+        title=tr("cat_thumbnails_title"),
+        description=tr("cat_thumbnails_desc"),
         size_bytes=thumb_size,
         size_formatted=format_size(thumb_size),
         count=0,
@@ -189,10 +190,10 @@ def scan_all_items() -> Dict[str, CleanItem]:
         fp_unused = get_flatpak_unused_count()
         items["flatpak_unused"] = CleanItem(
             id="flatpak_unused",
-            title="Неиспользуемые рантаймы Flatpak",
-            description=f"Библиотеки Flatpak, которые больше не нужны ни одному приложению ({fp_unused} шт.)",
+            title=tr("cat_flatpak_title"),
+            description=tr("cat_flatpak_desc", count=fp_unused),
             size_bytes=0,
-            size_formatted=f"{fp_unused} шт." if fp_unused else "0 шт.",
+            size_formatted=f"{fp_unused}" if fp_unused else "0",
             count=fp_unused,
             requires_root=False,
             enabled=bool(fp_unused),

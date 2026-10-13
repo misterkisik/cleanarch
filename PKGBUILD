@@ -30,7 +30,11 @@ sha256sums=('SKIP')
 
 build() {
     cd "$srcdir/$pkgname-$pkgver"
-    python -m build --wheel --no-isolation
+    if python -c "import build" &>/dev/null; then
+        python -m build --wheel --no-isolation
+    else
+        python setup.py bdist_wheel
+    fi
 }
 
 package() {
@@ -39,11 +43,15 @@ package() {
 
     # Ярлык приложения
     install -Dm644 data/cleanarch.desktop "$pkgdir/usr/share/applications/cleanarch.desktop"
+    ln -s cleanarch.desktop "$pkgdir/usr/share/applications/org.cleanarch.CleanArch.desktop"
 
     # Иконка приложения (PNG и SVG)
     install -Dm644 data/cleanarch.png "$pkgdir/usr/share/icons/hicolor/512x512/apps/cleanarch.png"
+    ln -s cleanarch.png "$pkgdir/usr/share/icons/hicolor/512x512/apps/org.cleanarch.CleanArch.png"
     install -Dm644 data/cleanarch.png "$pkgdir/usr/share/pixmaps/cleanarch.png"
+    ln -s cleanarch.png "$pkgdir/usr/share/pixmaps/org.cleanarch.CleanArch.png"
     install -Dm644 data/cleanarch.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/cleanarch.svg"
+    ln -s cleanarch.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/org.cleanarch.CleanArch.svg"
 
     # Изображение маскота-персонажа
     install -Dm644 data/mascot.png "$pkgdir/usr/share/cleanarch/mascot.png"
