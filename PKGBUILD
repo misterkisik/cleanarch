@@ -40,7 +40,9 @@ package() {
     # Ярлык приложения
     install -Dm644 data/cleanarch.desktop "$pkgdir/usr/share/applications/cleanarch.desktop"
 
-    # Иконка приложения
+    # Иконка приложения (PNG и SVG)
+    install -Dm644 data/cleanarch.png "$pkgdir/usr/share/icons/hicolor/512x512/apps/cleanarch.png"
+    install -Dm644 data/cleanarch.png "$pkgdir/usr/share/pixmaps/cleanarch.png"
     install -Dm644 data/cleanarch.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/cleanarch.svg"
 
     # Изображение маскота-персонажа

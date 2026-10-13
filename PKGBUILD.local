@@ -37,6 +37,8 @@ package() {
     python -m installer --destdir="$pkgdir" dist/*.whl
 
     install -Dm644 "$startdir/data/cleanarch.desktop" "$pkgdir/usr/share/applications/cleanarch.desktop"
+    install -Dm644 "$startdir/data/cleanarch.png" "$pkgdir/usr/share/icons/hicolor/512x512/apps/cleanarch.png"
+    install -Dm644 "$startdir/data/cleanarch.png" "$pkgdir/usr/share/pixmaps/cleanarch.png"
     install -Dm644 "$startdir/data/cleanarch.svg" "$pkgdir/usr/share/icons/hicolor/scalable/apps/cleanarch.svg"
     install -Dm644 "$startdir/data/mascot.png" "$pkgdir/usr/share/cleanarch/mascot.png"
 }

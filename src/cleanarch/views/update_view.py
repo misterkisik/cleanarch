@@ -50,7 +50,7 @@ class UpdateView(Adw.PreferencesPage):
 
         keyring_btn = Gtk.Button(label="Обновить ключи")
         keyring_btn.set_valign(Gtk.Align.CENTER)
-        keyring_btn.add_css_class("flat")
+        keyring_btn.add_css_class("suggested-action")
         keyring_btn.connect("clicked", lambda _: self._run_task("keyring"))
         keyring_row.add_suffix(keyring_btn)
         keyring_row.set_activatable_widget(keyring_btn)
@@ -65,7 +65,7 @@ class UpdateView(Adw.PreferencesPage):
 
             flatpak_btn = Gtk.Button(label="Обновить Flatpak")
             flatpak_btn.set_valign(Gtk.Align.CENTER)
-            flatpak_btn.add_css_class("flat")
+            flatpak_btn.add_css_class("suggested-action")
             flatpak_btn.connect("clicked", lambda _: self._run_task("flatpak"))
             flatpak_row.add_suffix(flatpak_btn)
             flatpak_row.set_activatable_widget(flatpak_btn)

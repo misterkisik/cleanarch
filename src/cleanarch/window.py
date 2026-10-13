@@ -2,10 +2,11 @@
 Главное окно CleanArch: слева маскот с репликами, справа разделы управления и консоль.
 """
 
+import os
 import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Gtk, Adw, Gio, GObject
+from gi.repository import Gtk, Adw, Gio, GObject, Gdk
 from cleanarch.mascot import MascotWidget
 from cleanarch.views.clean_view import CleanView
 from cleanarch.views.update_view import UpdateView
@@ -16,6 +17,14 @@ class CleanArchWindow(Adw.ApplicationWindow):
         super().__init__(**kwargs)
         self.set_title("CleanArch")
         self.set_default_size(980, 720)
+
+        # Регистрация путей к иконке в IconTheme
+        display = Gdk.Display.get_default()
+        if display:
+            icon_theme = Gtk.IconTheme.get_for_display(display)
+            data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "data"))
+            if os.path.exists(data_dir):
+                icon_theme.add_search_path(data_dir)
 
         # Оверлей для тостов
         self.toast_overlay = Adw.ToastOverlay()
@@ -116,7 +125,7 @@ class CleanArchWindow(Adw.ApplicationWindow):
         if hasattr(Adw, "AboutDialog"):
             dialog = Adw.AboutDialog()
             dialog.set_application_name("CleanArch")
-            dialog.set_application_icon("system-software-install-symbolic")
+            dialog.set_application_icon("cleanarch")
             dialog.set_version("1.0.0")
             dialog.set_developer_name("MisterKisik")
             dialog.set_comments(
@@ -127,6 +136,7 @@ class CleanArchWindow(Adw.ApplicationWindow):
         else:
             about = Adw.AboutWindow(transient_for=self)
             about.set_application_name("CleanArch")
+            about.set_application_icon("cleanarch")
             about.set_version("1.0.0")
             about.present()
 
