@@ -1,0 +1,17 @@
+#!/usr/bin/env python3
+"""
+Исполняемый файл запуска cleanarch из терминала.
+"""
+import sys
+import os
+
+real_script_path = os.path.realpath(__file__)
+current_dir = os.path.dirname(real_script_path)
+parent_src = os.path.abspath(os.path.join(current_dir, "..", "src"))
+if os.path.exists(parent_src):
+    sys.path.insert(0, parent_src)
+
+from cleanarch.app import main
+
+if __name__ == "__main__":
+    sys.exit(main())

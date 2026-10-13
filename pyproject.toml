@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cleanarch"
+version = "1.0.0"
+authors = [
+  { name = "MisterKisik" }
+]
+description = "Графическая утилита очистки кэшей и обновления Arch Linux"
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: POSIX :: Linux",
+    "Environment :: X11 Applications :: GTK",
+]
+dependencies = [
+    "PyGObject>=3.40.0",
+]
+
+[project.scripts]
+cleanarch = "cleanarch.app:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

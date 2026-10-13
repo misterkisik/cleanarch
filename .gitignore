@@ -1,0 +1,9 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.whl
+dist/
+build/
+*.egg-info/
+pkg/
+*.pkg.tar.zst

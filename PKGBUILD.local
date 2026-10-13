@@ -1,0 +1,42 @@
+# Maintainer: MisterKisik
+# Локальная сборка и установка пакета: makepkg -p PKGBUILD.local -si
+
+pkgname=cleanarch
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Графическая утилита очистки кэшей pacman/yay, системных логов и обновления Arch Linux"
+arch=('any')
+license=('GPL-3.0-or-later')
+depends=(
+    'python'
+    'python-gobject'
+    'gtk4'
+    'libadwaita'
+)
+makedepends=(
+    'python-build'
+    'python-installer'
+    'python-wheel'
+    'python-setuptools'
+)
+optdepends=(
+    'yay: для очистки кэша AUR'
+    'pacman-contrib: утилита paccache'
+    'polkit: графический запрос пароля (pkexec)'
+)
+source=()
+sha256sums=()
+
+build() {
+    cd "$startdir"
+    python -m build --wheel --no-isolation
+}
+
+package() {
+    cd "$startdir"
+    python -m installer --destdir="$pkgdir" dist/*.whl
+
+    install -Dm644 "$startdir/data/cleanarch.desktop" "$pkgdir/usr/share/applications/cleanarch.desktop"
+    install -Dm644 "$startdir/data/cleanarch.svg" "$pkgdir/usr/share/icons/hicolor/scalable/apps/cleanarch.svg"
+    install -Dm644 "$startdir/data/mascot.png" "$pkgdir/usr/share/cleanarch/mascot.png"
+}

@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=CleanArch
+GenericName=Arch Linux Cleaner & Updater
+GenericName[ru]=Очистка и обновление Arch Linux
+Comment=Графическая утилита очистки кэшей pacman/yay, системных логов и обновления Arch Linux
+Exec=cleanarch
+Icon=cleanarch
+Terminal=false
+Categories=System;
+Keywords=clean;arch;yay;pacman;cache;logs;update;очистка;кэш;мусор;обновление;
+StartupNotify=true
+StartupWMClass=org.cleanarch.CleanArch

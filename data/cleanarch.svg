@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1793d1"/>
+      <stop offset="100%" stop-color="#0f5984"/>
+    </linearGradient>
+    <linearGradient id="sparkleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f6d32d"/>
+      <stop offset="100%" stop-color="#ff7800"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Outer Rounded Card -->
+  <rect x="12" y="12" width="104" height="104" rx="26" fill="url(#bgGrad)" filter="url(#shadow)"/>
+
+  <!-- Arch Linux Swoosh / Mountain -->
+  <path d="M64 28 L94 88 L80 88 L72 74 L56 74 L48 88 L34 88 Z" fill="#ffffff" opacity="0.95"/>
+  <path d="M64 45 L58 66 L70 66 Z" fill="url(#bgGrad)"/>
+
+  <!-- Sparkles / Cleaning Stars -->
+  <g filter="url(#shadow)">
+    <!-- Main Sparkle Star -->
+    <path d="M92 34 Q92 46 104 46 Q92 46 92 58 Q92 46 80 46 Q92 46 92 34 Z" fill="url(#sparkleGrad)"/>
+    <!-- Small Sparkle -->
+    <path d="M36 68 Q36 75 43 75 Q36 75 36 82 Q36 75 29 75 Q36 75 36 68 Z" fill="#ffffff"/>
+  </g>
+</svg>

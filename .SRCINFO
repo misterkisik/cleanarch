@@ -1,0 +1,23 @@
+pkgbase = cleanarch
+	pkgdesc = Графическая утилита очистки кэшей pacman/yay, системных логов и обновления Arch Linux (GTK 4 / Libadwaita)
+	pkgver = 1.0.0
+	pkgrel = 1
+	url = https://github.com/misterkisik/cleanarch
+	arch = any
+	license = GPL-3.0-or-later
+	makedepends = python-build
+	makedepends = python-installer
+	makedepends = python-wheel
+	makedepends = python-setuptools
+	depends = python
+	depends = python-gobject
+	depends = gtk4
+	depends = libadwaita
+	optdepends = yay: для очистки кэша AUR и обновления сторонних пакетов
+	optdepends = pacman-contrib: утилита paccache для умной очистки кэша pacman
+	optdepends = polkit: графический запрос пароля суперпользователя (pkexec)
+	optdepends = flatpak: для очистки и обновления Flatpak
+	source = cleanarch-1.0.0.tar.gz::https://github.com/misterkisik/cleanarch/archive/refs/tags/v1.0.0.tar.gz
+	sha256sums = SKIP
+
+pkgname = cleanarch
