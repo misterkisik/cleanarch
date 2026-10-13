@@ -106,7 +106,7 @@ class PasswordDialog(Adw.Window):
         def check_worker():
             try:
                 proc = subprocess.run(
-                    ["sudo", "-S", "-k", "-v"],
+                    ["sudo", "-S", "-v"],
                     input=f"{password}\n",
                     capture_output=True,
                     text=True,
@@ -115,6 +115,12 @@ class PasswordDialog(Adw.Window):
                 success = (proc.returncode == 0)
             except Exception:
                 success = False
+
+            if not success:
+                try:
+                    subprocess.run(["faillock", "--reset"], capture_output=True)
+                except Exception:
+                    pass
 
             GLib.idle_add(self._on_check_complete, success, password)
 
