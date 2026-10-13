@@ -81,20 +81,18 @@ class PasswordDialog(Adw.Window):
         # Спиннер
         self.spinner = Gtk.Spinner()
         self.spinner.set_visible(False)
-        content_box.append(self.spinner)
-
         toolbar_view.set_content(content_box)
+        self.set_focus(self.entry)
 
     def present_dialog(self):
         self.present()
-        GLib.idle_add(self.entry.grab_focus)
 
     def _on_confirm(self):
         password = self.entry.get_text()
         if not password:
             self.error_label.set_text("Пожалуйста, введите пароль")
             self.error_label.set_visible(True)
-            self.entry.grab_focus()
+            self.set_focus(self.entry)
             return
 
         self.error_label.set_visible(False)
@@ -140,4 +138,4 @@ class PasswordDialog(Adw.Window):
             self.error_label.set_text("❌ Неверный пароль. Попробуйте снова.")
             self.error_label.set_visible(True)
             self.entry.set_text("")
-            self.entry.grab_focus()
+            self.set_focus(self.entry)

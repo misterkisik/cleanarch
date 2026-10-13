@@ -206,6 +206,13 @@ def build_clean_script(selected_ids: List[str], has_sudo_pass: bool = False) -> 
     commands = []
     commands.append('echo "=== [CleanArch] Начинаем очистку системы ==="')
 
+    # Проверяем наличие root-задач
+    has_root_tasks = any(i in selected_ids for i in ("pacman_cache", "journal", "orphans"))
+    if has_root_tasks and has_sudo_pass:
+        # Валидируем sudo сессию один раз
+        commands.append('printf "%s\\n" "$CLEANARCH_PASS" | sudo -S -v 2>/dev/null || true')
+        commands.append('unset CLEANARCH_PASS')
+
     # Thumbnails (пользователь)
     if "thumbnails" in selected_ids:
         commands.append('echo ""')
@@ -216,10 +223,10 @@ def build_clean_script(selected_ids: List[str], has_sudo_pass: bool = False) -> 
     if "yay_cache" in selected_ids:
         commands.append('echo ""')
         commands.append('echo "-> Очистка кэша yay..."')
-        if shutil.which("yay"):
-            commands.append('yay -Sc --noconfirm || true')
-        else:
-            commands.append('rm -rf ~/.cache/yay/* || true')
+        commands.append('if command -v yay &>/dev/null; then')
+        commands.append('    printf "y\\ny\\n" | yay -Sc --noconfirm 2>/dev/null || true')
+        commands.append('fi')
+        commands.append('rm -rf ~/.cache/yay/* 2>/dev/null || true')
         commands.append('echo "✓ Кэш yay очищен"')
 
     # Flatpak unused (пользователь)
@@ -229,45 +236,34 @@ def build_clean_script(selected_ids: List[str], has_sudo_pass: bool = False) -> 
         commands.append('flatpak uninstall --unused -y || true')
         commands.append('echo "✓ Flatpak очищен"')
 
-    # Root commands (pacman cache, journal, orphans)
-    root_cmds = []
-    if "pacman_cache" in selected_ids:
-        root_cmds.append('echo "-> Очистка старых пакетов pacman..."')
-        if shutil.which("paccache"):
-            root_cmds.append('paccache -rk2 || true')
-        else:
-            root_cmds.append('pacman -Sc --noconfirm || true')
-        root_cmds.append('echo "✓ Кэш pacman очищен"')
-
-    if "journal" in selected_ids:
-        root_cmds.append('echo "-> Сокращение системного журнала (до 3 дней)..."')
-        root_cmds.append('journalctl --vacuum-time=3d || true')
-        root_cmds.append('echo "✓ Журнал очищен"')
-
-    if "orphans" in selected_ids:
-        root_cmds.append('echo "-> Удаление пакетов-сирот..."')
-        root_cmds.append('orphans=$(pacman -Qtdq 2>/dev/null)')
-        root_cmds.append('if [ -n "$orphans" ]; then')
-        root_cmds.append('    pacman -Rns $orphans --noconfirm || true')
-        root_cmds.append('    echo "✓ Пакеты-сироты удалены"')
-        root_cmds.append('else')
-        root_cmds.append('    echo "✓ Пакеты-сироты не найдены"')
-        root_cmds.append('fi')
-
-    if root_cmds:
+    # Root tasks
+    if has_root_tasks:
         commands.append('echo ""')
         commands.append('echo "-> Выполнение системных операций (права root)..."')
-        inner = " && \\\n    ".join(root_cmds)
-        if os.geteuid() == 0:
-            commands.append(inner)
-        elif has_sudo_pass:
-            # Автоматическая подача пароля через stdin в sudo -S
-            commands.append(f'printf "%s\\n" "$CLEANARCH_PASS" | sudo -S bash -c "{inner}"')
-            commands.append('unset CLEANARCH_PASS')
-        elif shutil.which("pkexec"):
-            commands.append(f'pkexec bash -c "{inner}"')
-        else:
-            commands.append(f'sudo bash -c "{inner}"')
+
+        if "pacman_cache" in selected_ids:
+            commands.append('echo "-> Очистка старых пакетов pacman..."')
+            commands.append('if command -v paccache &>/dev/null; then')
+            commands.append('    sudo paccache -rk2 || true')
+            commands.append('else')
+            commands.append('    printf "y\\n" | sudo pacman -Sc --noconfirm 2>/dev/null || true')
+            commands.append('fi')
+            commands.append('echo "✓ Кэш pacman очищен"')
+
+        if "journal" in selected_ids:
+            commands.append('echo "-> Сокращение системного журнала (до 3 дней)..."')
+            commands.append('sudo journalctl --vacuum-time=3d || true')
+            commands.append('echo "✓ Журнал очищен"')
+
+        if "orphans" in selected_ids:
+            commands.append('echo "-> Удаление пакетов-сирот..."')
+            commands.append('orphans=$(pacman -Qtdq 2>/dev/null)')
+            commands.append('if [ -n "$orphans" ]; then')
+            commands.append('    echo "$orphans" | sudo pacman -Rns - --noconfirm || true')
+            commands.append('    echo "✓ Пакеты-сироты удалены"')
+            commands.append('else')
+            commands.append('    echo "✓ Пакеты-сироты не найдены"')
+            commands.append('fi')
 
     commands.append('echo ""')
     commands.append('echo "=== [CleanArch] Очистка успешно завершена! ✨ ==="')
@@ -277,33 +273,21 @@ def build_update_script(task: str, has_sudo_pass: bool = False) -> str:
     """Генерирует скрипт для обновления с поддержкой автоподстановки пароля."""
     commands = []
     if has_sudo_pass:
-        # Предварительно валидируем sudo токен через переданный пароль
         commands.append('printf "%s\\n" "$CLEANARCH_PASS" | sudo -S -v 2>/dev/null || true')
+        commands.append('unset CLEANARCH_PASS')
 
     if task == "full_update":
         commands.append('echo "=== [CleanArch] Обновление системы и AUR ==="')
         if shutil.which("yay"):
             commands.append('yay -Syu --noconfirm')
-        elif has_sudo_pass:
-            commands.append('printf "%s\\n" "$CLEANARCH_PASS" | sudo -S pacman -Syu --noconfirm')
-        elif shutil.which("pkexec"):
-            commands.append('pkexec pacman -Syu --noconfirm')
         else:
             commands.append('sudo pacman -Syu --noconfirm')
     elif task == "keyring":
         commands.append('echo "=== [CleanArch] Обновление ключей archlinux-keyring ==="')
-        if has_sudo_pass:
-            commands.append('printf "%s\\n" "$CLEANARCH_PASS" | sudo -S pacman -Sy archlinux-keyring --noconfirm')
-        elif shutil.which("pkexec"):
-            commands.append('pkexec pacman -Sy archlinux-keyring --noconfirm')
-        else:
-            commands.append('sudo pacman -Sy archlinux-keyring --noconfirm')
+        commands.append('sudo pacman -Sy archlinux-keyring --noconfirm')
     elif task == "flatpak":
         commands.append('echo "=== [CleanArch] Обновление пакетов Flatpak ==="')
         commands.append('flatpak update -y')
-
-    if has_sudo_pass:
-        commands.append('unset CLEANARCH_PASS')
 
     commands.append('echo "=== [CleanArch] Процесс завершен! ==="')
     return "\n".join(commands)
